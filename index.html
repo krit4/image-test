@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload and Logo Overlay</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        #image-preview {
+            display: block;
+            max-width: 100%;
+            margin-top: 20px;
+            position: relative;
+        }
+        #canvas {
+            display: none;
+        }
+        .logo {
+            position: absolute;
+        }
+        .top-left {
+            top: 0;
+            left: 0;
+        }
+        .top-right {
+            top: 0;
+            right: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Image Upload and Logo Overlay</h1>
+    <input type="file" id="imageUpload" accept="image/*">
+    <select id="logoPosition">
+        <option value="top-left">Top Left</option>
+        <option value="top-right">Top Right</option>
+    </select>
+    <button id="downloadBtn">Download Image</button>
+
+    <div id="image-preview"></div>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const imageUpload = document.getElementById('imageUpload');
+        const logoPosition = document.getElementById('logoPosition');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const imagePreview = document.getElementById('image-preview');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const logoSrc = 'path/to/your/logo.png'; // Replace with your logo path
+
+        let uploadedImage;
+
+        imageUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const imageUrl = e.target.result;
+                    if (typeof imageUrl === 'string') {
+                        imagePreview.innerHTML = `<img src="${imageUrl}" alt="Uploaded Image">`;
+                        addLogoToImage(imageUrl, logoSrc, logoPosition.value);
+                    } else {
+                        console.error('FileReader result is not a string.');
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        logoPosition.addEventListener('change', () => {
+            const imgElement = document.querySelector('#image-preview img');
+            if (imgElement) {
+                addLogoToImage(imgElement.src, logoSrc, logoPosition.value);
+            }
+        });
+
+        function addLogoToImage(imageUrl, logoUrl, position) {
+            const image = new Image();
+            const logo = new Image();
+
+            image.onload = () => {
+                logo.onload = () => {
+                    canvas.width = image.width;
+                    canvas.height = image.height;
+                    ctx.drawImage(image, 0, 0);
+
+                    const logoWidth = logo.width / 4;
+                    const logoHeight = logo.height / 4;
+                    let x, y;
+
+                    if (position === 'top-left') {
+                        x = 10;
+                        y = 10;
+                    } else {
+                        x = canvas.width - logoWidth - 10;
+                        y = 10;
+                    }
+
+                    ctx.drawImage(logo, x, y, logoWidth, logoHeight);
+                    const dataUrl = canvas.toDataURL();
+                    imagePreview.innerHTML = `<img src="${dataUrl}" alt="Image with Logo">`;
+                };
+
+                logo.src = logoUrl;
+            };
+
+            image.src = imageUrl;
+        }
+
+        function downloadImage() {
+            const imageElement = document.querySelector('#image-preview img');
+            if (!imageElement) {
+                alert("No image to download.");
+                return;
+            }
+
+            const link = document.createElement('a');
+            link.download = 'image-with-logo.png';
+            link.href = imageElement.src;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        downloadBtn.addEventListener('click', downloadImage);
+    </script>
+</body>
+</html>
